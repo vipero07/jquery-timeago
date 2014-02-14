@@ -34,7 +34,10 @@
       return inWords($.timeago.datetime(timestamp));
     }
   };
-  var $t = $.timeago;
+  var $t = $.timeago, globalTimeout = false;
+  if($.globalTimeout){
+    globalTimeout = [];
+  }
 
   $.extend($.timeago, {
     settings: {
@@ -129,7 +132,39 @@
       refresh_el();
       var $s = $t.settings;
       if ($s.refreshMillis > 0) {
-        this._timeagoInterval = setInterval(refresh_el, $s.refreshMillis);
+        if(globalTimeout){
+          
+          if(!globalTimeout[$s.refreshMillis]){
+            //there is no current global timeout for this refreshrate
+            globalTimeout[$s.refreshMillis] = true;
+            
+            //so lets make one
+            $.globalTimeout({ rate: $s.refreshMillis, name: 'timeago' + $s.refreshMillis, clear: false });
+            
+            var $win = $(window);
+            //hook the global timeout event once
+            $win.on('timeago'+$s.refreshMillis+'.timeago', function () {
+              
+              //get all timeago elements that have that timeout time
+              var $el = $('.timeagoTimeout'+$s.refreshMillis);
+              if($el.length > 0){
+                //call timeago
+                $el.timeago();
+              }else{
+                //no elements match this timeout, remove the timer and unhook the event
+                $.globalTimeout({ clear: true, name: 'timeago' + $s.refreshMillis });
+                $win.off('timeago'+$s.refreshMillis);
+                globalTimeout[$s.refreshMillis] = false;
+              }
+            });
+            
+          }
+          
+          $(this).addClass('timeagoTimeout'+$s.refreshMillis);
+          this._timeagoInterval = $s.refreshMillis;
+        }else{
+          this._timeagoInterval = setInterval(refresh_el, $s.refreshMillis);
+        }
       }
     },
     update: function(time){
@@ -143,9 +178,14 @@
       refresh.apply(this);
     },
     dispose: function () {
-      if (this._timeagoInterval) {
-        window.clearInterval(this._timeagoInterval);
-        this._timeagoInterval = null;
+        if (this._timeagoInterval) {
+          if(globalTimeout){
+            $(this).removeClass('timeagoTimeout'+this._timeagoInterval);
+            this._timeagoInterval = null;
+          }else{
+            window.clearInterval(this._timeagoInterval);
+            this._timeagoInterval = null;
+          }
       }
     }
   };
