@@ -142,13 +142,16 @@
       return $.trim([prefix, words, suffix].join(separator));
     },
     parse: function(iso8601) {
-      var s = $.trim(iso8601)
-          .replace(regex[0], "") // remove milliseconds
-          .replace(regex[1], "/")
-          .replace(regex[2], " ")
-          .replace(regex[3], " UTC")
-          .replace(regex[4], " $1$2") // -04:00 -> -0400
-          .replace(regex[5], " $100"); // +09 -> +0900
+      var s = $.trim(iso8601);
+      
+      if(!Date.prototype.toISOString){
+          s = s.replace(regex[0], "") // remove milliseconds
+            .replace(regex[1], "/")
+            .replace(regex[2], " ")
+            .replace(regex[3], " UTC")
+            .replace(regex[4], " $1$2") // -04:00 -> -0400
+            .replace(regex[5], " $100"); // +09 -> +0900
+      }
           
       return new Date(s);
     },
