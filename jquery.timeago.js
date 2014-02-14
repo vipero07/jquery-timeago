@@ -145,7 +145,6 @@
       var s = $.trim(iso8601)
           .replace(regex[0], "") // remove milliseconds
           .replace(regex[1], "/")
-          .replace(regex[1], "/")
           .replace(regex[2], " ")
           .replace(regex[3], " UTC")
           .replace(regex[4], " $1$2") // -04:00 -> -0400
